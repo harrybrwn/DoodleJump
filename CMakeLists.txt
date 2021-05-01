@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 11)     # Use c++11
-set(CMAKE_VERBOSE_MAKEFILE ON) # Debugging the build system
+# set(CMAKE_VERBOSE_MAKEFILE ON) # Debugging the build system
 
 project(DoodleJump)
 set(SOURCES main.cpp)

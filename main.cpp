@@ -1,13 +1,34 @@
 #include <SFML/Graphics.hpp>
-#include <string.h>
 
+#include <random>
 #include <iostream>
+#include <stdlib.h>
+
+#include "PlatformCtrl.h"
+
+// Static assets
 #include "doodle_png.i"
 #include "background.i"
+
+// Gravity
+static const float G = 0.4;
 
 struct Player {
     unsigned int height, width;
     float x, y;
+    float dx, dy;
+
+    Player(sf::Vector2u size)
+    {
+        height = size.y;
+        width = size.x;
+        dx = 0;
+        dy = 0;
+    }
+    Player(sf::Vector2u size, int x, int y)
+      : height(size.y), width(size.x), x(x), y(y)
+    {
+    }
 };
 
 int main(void)
@@ -19,14 +40,17 @@ int main(void)
     sf::Texture playertex;
     sf::Sprite background;
     sf::Sprite player;
-    Player p;
+
+    static const int nplatforms = 10;
+    sf::RectangleShape platforms[nplatforms];
+    PlatformCtrl ctrl(platforms, nplatforms);
+    ctrl.set_bounds(500, 800);
+    ctrl.randomize();
 
     playertex.loadFromMemory(doodle_png, doodle_png_len);
     player.setTexture(playertex);
-    p.height = playertex.getSize().y;
-    p.width = playertex.getSize().x;
-    p.x = 250;
-    p.y = 800 - p.height - 1;
+    sf::Vector2u pSize = playertex.getSize();
+    Player p( pSize, 250, 800-pSize.y );
     player.setPosition(p.x, p.y);
     backgroundtex.loadFromMemory(
         background_png,
@@ -60,6 +84,8 @@ int main(void)
             }
         }
 
+        static const float jump = 10;
+
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         {
             p.x -= 5;
@@ -70,10 +96,13 @@ int main(void)
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         {
-            p.y -= 20;
+            p.dy = -jump;
         }
 
-        p.y += 2; // gravity
+        p.dy += G; // Gravity
+
+        p.x += p.dx;
+        p.y += p.dy;
 
         // Bottom edge detection
         if (p.y > 800-p.height)
@@ -87,6 +116,8 @@ int main(void)
 
         player.setPosition(p.x, p.y);
         win.draw(background);
+        for (int i = 0; i < nplatforms; i++)
+            win.draw(platforms[i]);
         win.draw(player);
         win.display();
     }
