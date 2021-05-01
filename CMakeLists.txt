@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 11)     # Use c++11
-# set(CMAKE_VERBOSE_MAKEFILE ON) # Debugging the build system
 
 project(DoodleJump)
-set(SOURCES main.cpp)
+file(GLOB SOURCES CONFIGURE_DEPENDS *.cpp *.h)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Force static linking with sfml
