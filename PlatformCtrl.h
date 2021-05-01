@@ -10,6 +10,8 @@
  * Platfor controller for managing and generating platforms
  */
 class PlatformCtrl {
+    static const int PlatformWidth = 120;
+
     int n;
     sf::RectangleShape* platforms;
 
@@ -28,7 +30,7 @@ public:
     PlatformCtrl(sf::RectangleShape platforms[], int n)
       : platforms(platforms), n(n), rng_engine(time(0))
     {
-        sf::Vector2f size(120, 20);
+        sf::Vector2f size(PlatformWidth, 20);
         set.reserve(n);
         for (int i = 0; i < n; i++)
         {
@@ -44,8 +46,8 @@ public:
         screen.w = w;
         screen.h = h;
         rng = {
-            std::uniform_int_distribution<int>(0, w-10),
-            std::uniform_int_distribution<int>(100, h)
+            std::uniform_int_distribution<int>(PlatformWidth/2, w-PlatformWidth),
+            std::uniform_int_distribution<int>(0, PlatformWidth),
         };
     }
 
@@ -59,11 +61,18 @@ public:
     void randomize()
     {
         int x, y;
+        // Divide the screen vertically into "n" regions
+        // and generate a random height inside each region
+        // so the platform heigh feels random but really isn't
+        // that random because players still need to be able
+        // to get to the top.
+        const int section_width = screen.h / n;
+
         for (int i = 0; i < n; i++)
         {
             x = rng.x(rng_engine);
             y = rng.y(rng_engine);
-            platforms[i].setPosition(x, y);
+            platforms[i].setPosition(x, y+(i*section_width));
             set.insert(y);
         }
     }
