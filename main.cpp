@@ -6,7 +6,7 @@
 #include "background.i"
 
 struct Player {
-    uint height, width;
+    unsigned int height, width;
     float x, y;
 };
 

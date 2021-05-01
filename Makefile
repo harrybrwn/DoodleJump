@@ -1,18 +1,28 @@
-MKDIR=mkdir -p
+CXX=gcc
+CMAKE=cmake
+RMFLAGS=-r
+RMDIR=$(RM)
+
+# Windows settings
+ifeq ($(OS), Windows_NT)
+RMFLAGS=/S /Q
+RMDIR=rmdir
+CMAKE=cmake -G "MinGW Makefiles"
+endif
 
 all: build/DoodleJump
 
 clean:
-	$(RM) -r build
+	$(RM) $(RMFLAGS) build
 
 build/DoodleJump: build/Makefile
-	cd build && $(MAKE)
+	$(MAKE) -C build
 
 build/Makefile: build lib/sfml
-	cd build && cmake ..
+	cd build && $(CMAKE) ..
 
 build:
-	$(MKDIR) build
+	mkdir build
 
 lib/sfml:
 	git clone --depth=1 -b 2.5.1 https://github.com/SFML/SFML.git $@
