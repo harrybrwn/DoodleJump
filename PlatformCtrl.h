@@ -4,8 +4,6 @@
 #include <random>
 #include <ctime>
 
-#include <unordered_set>
-
 /**
  * Platfor controller for managing and generating platforms
  */
@@ -13,25 +11,20 @@ class PlatformCtrl {
     static const int PlatformWidth = 120;
 
     int n;
+    struct { int w, h; } screen;
     sf::RectangleShape* platforms;
 
-    struct { int w, h; } screen;
-
+    std::default_random_engine rng_engine;
     struct {
         std::uniform_int_distribution<int> x;
         std::uniform_int_distribution<int> y;
     } rng;
-    std::default_random_engine rng_engine;
-
-    // set of y values
-    std::unordered_set<int> set;
 
 public:
     PlatformCtrl(sf::RectangleShape platforms[], int n)
       : platforms(platforms), n(n), rng_engine(time(0))
     {
         sf::Vector2f size(PlatformWidth, 20);
-        set.reserve(n);
         for (int i = 0; i < n; i++)
         {
             platforms[i].setSize(size);
@@ -45,10 +38,8 @@ public:
         // TODO Make this function an option as a contructor
         screen.w = w;
         screen.h = h;
-        rng = {
-            std::uniform_int_distribution<int>(PlatformWidth/2, w-PlatformWidth),
-            std::uniform_int_distribution<int>(0, PlatformWidth),
-        };
+        rng.x = std::uniform_int_distribution<int>(PlatformWidth/2, w-PlatformWidth);
+        rng.y = std::uniform_int_distribution<int>(0, w / n);
     }
 
     void randomize(int w, int h)
@@ -73,7 +64,6 @@ public:
             x = rng.x(rng_engine);
             y = rng.y(rng_engine);
             platforms[i].setPosition(x, y+(i*section_width));
-            set.insert(y);
         }
     }
 
@@ -101,10 +91,25 @@ public:
         return false;
     }
 
-    void shift(int y)
-    {
-        // TODO shift all platforms up by y
-        //      and move platforms to the top if
-        //      they go through the floor.
-    }
+    void shift_up(int y);
 };
+
+void PlatformCtrl::shift_up(int y)
+{
+    sf::Vector2f pos;
+    for (int i = 0; i < n; i++)
+    {
+        pos = platforms[i].getPosition();
+        if (pos.y > screen.h)
+        {
+            // generate a new position for the platform
+            // make sure its off-screen
+            platforms[i].setPosition(rng.x(rng_engine), -50);
+        }
+        else
+        {
+            pos.y += y;
+            platforms[i].setPosition(pos);
+        }
+    }
+}

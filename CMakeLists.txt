@@ -11,7 +11,6 @@ set(SFML_USE_STATIC_STD_LIBS ON)
 
 set(SFML_BUILD_DOC OFF)      # Don't build docs
 set(SFML_BUILD_EXAMPLES OFF) # Don't build examples
-set(SFML_BUILD_NETWORK OFF)  # Don't build sfml networking
 
 add_subdirectory(lib/sfml)
 target_link_libraries(${PROJECT_NAME}
