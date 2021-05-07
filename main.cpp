@@ -65,7 +65,7 @@ int main(void)
     playertex.loadFromFile("assets/PixelThing.png");
     player.setTexture(playertex);
     sf::Vector2u pSize = playertex.getSize();
-    Player p( pSize, vw / 2, vh );
+    Player p( pSize, vw / 2, vh-pSize.y );
 
     // Create the window
     sf::VideoMode video(vw, vh);
