@@ -75,7 +75,7 @@ public:
             bounds = platforms[i].getGlobalBounds();
             if (bounds.intersects(box))
             {
-                hit_check = true;
+                // hit_check = true;
                 return true;
             }
         }
