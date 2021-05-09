@@ -54,6 +54,12 @@ public:
 
     void jump(float speed)
     {
+        // TODO I can't remember why this is like this
+        //      an hour after I wrote it and the
+        //      comments don't help, it should go away
+        //      bc it's hideous. Although, not jumping
+        //      when the player is in the air is useful.
+
         // dont jump twice in a row without ever
         // touching the ground
         if (dy == 0 && !jumped)

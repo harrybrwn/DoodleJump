@@ -8,6 +8,8 @@
 #include "PlatformCtrl.h"
 #include "Player.h"
 
+#define DEBUG
+
 using namespace std;
 
 // Gravity
@@ -45,7 +47,6 @@ int main(void)
 
     // platform stuff
     static const int nplatforms = 13;
-    // static const int nplatforms = 8;
     sf::RectangleShape platforms[nplatforms];
     PlatformCtrl platform_ctrl(platforms, nplatforms);
     platform_ctrl.set_bounds(vw, vh);
@@ -88,7 +89,7 @@ int main(void)
             p.dy += G;
         }
 
-        if (p.y <= 200 && p.dy < 0)
+        if (p.y < 200 && p.dy < 0)
         {
             platform_ctrl.shift_up(-p.dy);
             p.y = 200;
@@ -106,6 +107,7 @@ int main(void)
         p.x  += p.dx;
         p.y  += p.dy;
 
+    #ifdef DEBUG
         // For debugging only: place player with mouse
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
@@ -114,7 +116,10 @@ int main(void)
             p.y = pos.y;
             p.dy = 0;
         }
+        else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+            p.dy = -40; // jump really high
         if (scrolledUp) platform_ctrl.shift_up(20);
+    #endif
 
         p.width_wrap(vw);
         p.update();

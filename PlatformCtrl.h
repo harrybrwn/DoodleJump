@@ -8,8 +8,6 @@
  * Platfor controller for managing and generating platforms
  */
 class PlatformCtrl {
-    static const int PlatformWidth = 120;
-    static const int PlatformHeight = 15;
 
     int n;
     struct { int w, h; } screen;
@@ -22,6 +20,9 @@ class PlatformCtrl {
     } rng;
 
 public:
+    static const int PlatformWidth = 120;
+    static const int PlatformHeight = 15;
+
     PlatformCtrl(sf::RectangleShape platforms[], int n)
       : platforms(platforms), n(n), rng_engine(time(0))
     {
@@ -75,7 +76,7 @@ public:
         {
             bounds = platforms[i].getGlobalBounds();
             // making sure players dont get stuck mid-platform
-            // bounds.height = (int)bounds.height / 2;
+            //bounds.height = (int)bounds.height / 2;
             if (box.intersects(bounds))
                 return true;
         }
@@ -129,7 +130,7 @@ void PlatformCtrl::shift_up(int y)
         {
             // generate a new position for the platform
             // make sure its off-screen
-            platforms[i].setPosition(rng.x(rng_engine), -50);
+            platforms[i].setPosition(rng.x(rng_engine), rng.y(rng_engine)-50);
         }
         else
         {
