@@ -18,6 +18,7 @@ static const float move_speed = 5;
 
 static bool handle_close_events(sf::RenderWindow& win);
 static void debug_hitbox(sf::FloatRect hitbox, sf::RenderWindow& win);
+static bool scrolledUp = false;
 
 int main(void)
 {
@@ -44,15 +45,11 @@ int main(void)
 
     // platform stuff
     static const int nplatforms = 13;
+    // static const int nplatforms = 8;
     sf::RectangleShape platforms[nplatforms];
     PlatformCtrl platform_ctrl(platforms, nplatforms);
     platform_ctrl.set_bounds(vw, vh);
-    // platform_ctrl.randomize();
-
-    p.y = (vh/3);
-    p.x = (vw/4);
-    platforms[0].setPosition(p.x-60, p.y+30);
-    platforms[1].setPosition(vw/2, vh-120);
+    platform_ctrl.randomize();
 
     // Create the window
     sf::VideoMode video(vw, vh);
@@ -83,20 +80,13 @@ int main(void)
         // if hitting a platform while falling
         if (p.dy >= 0 && platform_ctrl.hit_platform(p.jump_hitbox()))
         {
-            // p.dy = 0;
-            p.dy = -jump;
-            // cout << "platform hit: " << p.x << ", " << p.y << ", vel: " << p.dx << ", " << p.dy << std::endl;
             cout << "platform hit: " << p.dx << ", " << p.dy << std::endl;
+            p.dy = -jump;
         }
         else
         {
-            // cout << "G: " << p.x << ", " << p.y << endl;
             p.dy += G;
         }
-
-        p.dx *= 0.85; // friction/wind-resistance... something like that
-        p.x  += p.dx;
-        p.y  += p.dy;
 
         if (p.y <= 200 && p.dy < 0)
         {
@@ -112,22 +102,28 @@ int main(void)
             p.dy = 0;
         }
 
-        if (p.x > vw + (float)p.width)
+        p.dx *= 0.85; // friction/wind-resistance... something like that
+        p.x  += p.dx;
+        p.y  += p.dy;
+
+        // For debugging only: place player with mouse
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            p.x = -1.0f*p.width;
+            sf::Vector2i pos = sf::Mouse::getPosition(win);
+            p.x = pos.x;
+            p.y = pos.y;
+            p.dy = 0;
         }
-        else if (p.x < (-1.0f*(float)p.width))
-        {
-            p.x = vw + (float)p.width;
-        }
+        if (scrolledUp) platform_ctrl.shift_up(20);
+
+        p.width_wrap(vw);
+        p.update();
 
         char buf[500];
         snprintf(buf, sizeof(buf),
             "velocity: <%f, %f>\nposition: <%f, %f>\n",
             p.dx, p.dy, p.x, p.y);
         debugtext.setString(buf);
-
-        p.update();
 
         win.draw(background);
         for (int i = 0; i < nplatforms; i++)
@@ -142,6 +138,7 @@ int main(void)
 static bool handle_close_events(sf::RenderWindow& win)
 {
     sf::Event event;
+    scrolledUp = false;
     while (win.pollEvent(event))
         switch (event.type)
         {
@@ -158,6 +155,10 @@ static bool handle_close_events(sf::RenderWindow& win)
                 win.close();
                 return true;
             }
+            break;
+        case sf::Event::MouseWheelScrolled:
+            if (event.mouseWheel.x > 0)
+                scrolledUp = true;
             break;
         }
     return false;

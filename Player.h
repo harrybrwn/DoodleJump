@@ -67,6 +67,14 @@ public:
         }
     }
 
+    void width_wrap(int view_width)
+    {
+        if (x > view_width + (float)width)
+            x = -1.0f * width;
+        else if (x < (-1.0f * (float)width))
+            x = view_width + (float)width;
+    }
+
     /**
      * jump_hitbox returns a hitbox at the player's feet
      * to detect the player landing on the platform.
