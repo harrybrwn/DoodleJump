@@ -43,21 +43,19 @@ public:
         sprite.setOrigin(width / 2, 0); // set origin at center of player feet
     }
 
-    void draw_with(sf::RenderWindow& drawer)
+    void update()
     {
-        // update
         hitbox.left = x - (width/2);
         hitbox.top = y + height;
         hitbox.width = width;
         hitbox.height = 1;
         sprite.setPosition(x, y);
-
-        // draw
-        drawer.draw(sprite);
     }
 
     void jump(float speed)
     {
+        // dont jump twice in a row without ever
+        // touching the ground
         if (dy == 0 && !jumped)
         {
             dy = speed;
@@ -75,10 +73,6 @@ public:
      */
     sf::FloatRect jump_hitbox() const
     {
-        // sf::FloatRect hitbox(
-        //     x - (width / 2), y + height, // positioned at player's feet
-        //     width, 1
-        // );
         return hitbox;
     }
 

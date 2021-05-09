@@ -9,6 +9,7 @@
  */
 class PlatformCtrl {
     static const int PlatformWidth = 120;
+    static const int PlatformHeight = 15;
 
     int n;
     struct { int w, h; } screen;
@@ -24,7 +25,7 @@ public:
     PlatformCtrl(sf::RectangleShape platforms[], int n)
       : platforms(platforms), n(n), rng_engine(time(0))
     {
-        sf::Vector2f size(PlatformWidth, 20);
+        sf::Vector2f size(PlatformWidth, PlatformHeight);
         for (int i = 0; i < n; i++)
         {
             platforms[i].setSize(size);
@@ -73,11 +74,10 @@ public:
         for (int i = 0; i < n; i++)
         {
             bounds = platforms[i].getGlobalBounds();
-            if (bounds.intersects(box))
-            {
-                // hit_check = true;
+            // making sure players dont get stuck mid-platform
+            // bounds.height = (int)bounds.height / 2;
+            if (box.intersects(bounds))
                 return true;
-            }
         }
         return false;
     }
