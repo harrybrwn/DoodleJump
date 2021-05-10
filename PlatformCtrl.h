@@ -64,7 +64,8 @@ public:
         for (int i = 0; i < n; i++)
         {
             x = rng.x(rng_engine);
-            y = rng.y(rng_engine);
+            // y = rng.y(rng_engine);
+            y = 0;
             platforms[i].setPosition(x, y+(i*section_width));
         }
     }

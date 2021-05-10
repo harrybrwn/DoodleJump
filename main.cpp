@@ -5,21 +5,19 @@
 #include <iostream>
 #include <stdlib.h>
 
+#include "Game.hpp"
 #include "PlatformCtrl.h"
 #include "Player.h"
+#include "util.hpp"
 
 #define DEBUG
 
 using namespace std;
 
-// Gravity
-static float G = 0.3;
-// Jump speed
-static const float jump = 10;
-static const float move_speed = 5;
-
-static bool handle_close_events(sf::RenderWindow& win);
+static bool should_close(sf::RenderWindow& win);
 static void debug_hitbox(sf::FloatRect hitbox, sf::RenderWindow& win);
+void end_screen(sf::RenderWindow& win, sf::Font& font);
+
 static bool scrolledUp = false;
 
 int main(void)
@@ -34,16 +32,11 @@ int main(void)
     vw = backgroundtex.getSize().x;
     vh = backgroundtex.getSize().y;
 
-    sf::Font font;
-    font.loadFromFile("assets/arial.ttf");
-    sf::Text debugtext;
-    debugtext.setFont(font);
-    debugtext.setCharacterSize(18);
-    debugtext.setFillColor(sf::Color::Black);
+    int playerDistTraveled = 0;
 
     Player p("assets/PixelThing.png");
     p.x = vw / 2;
-    p.y = vh-100;
+    p.y = vh - (vh/4);
 
     // platform stuff
     static const int nplatforms = 13;
@@ -51,61 +44,86 @@ int main(void)
     PlatformCtrl platform_ctrl(platforms, nplatforms);
     platform_ctrl.set_bounds(vw, vh);
     platform_ctrl.randomize();
+    // guarantee that a platform is under the player at spawn
+    platforms[nplatforms-1].setPosition(
+        p.x-(PlatformCtrl::PlatformWidth/2),
+        p.y+(p.height*2));
 
     // Create the window
     sf::VideoMode video(vw, vh);
     sf::RenderWindow win(video, "Not Doodle Jump ;)", sf::Style::Close);
-    win.setFramerateLimit(60);
+    Game game(win);
+    game.score.setPosition(vw-175, 50);
+
+    sf::Text debugtext("", game.font, 18);
+    debugtext.setFillColor(sf::Color::Black);
+
+    win.draw(background);
+    if (game.show_opening_screen() < 0)
+        return 0;
+
+    win.clear();
     while (win.isOpen())
     {
         // Handle window events
-        if (handle_close_events(win))
+        if (should_close(win))
+        {
             return 0;
+        }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         {
             p.sprite.setScale(-1, 1);
-            p.dx = -move_speed; // Moves Left
+            p.dx = -Game::MoveSpeed; // Moves Left
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
         {
             p.look_right();
-            p.dx =  move_speed; // Moves Right
+            p.dx = Game::MoveSpeed; // Moves Right
         }
 
+    #ifdef DEBUG
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            p.jump(-jump);
+            p.jump(-Game::Jump);
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
             p.y += 1; // for debugging
+    #endif
 
         // if hitting a platform while falling
         if (p.dy >= 0 && platform_ctrl.hit_platform(p.jump_hitbox()))
         {
             cout << "platform hit: " << p.dx << ", " << p.dy << std::endl;
-            p.dy = -jump;
+            p.dy = -Game::Jump;
         }
         else
         {
-            p.dy += G;
+            p.dy += Game::Gravity;
         }
 
         if (p.y < 200 && p.dy < 0)
         {
             platform_ctrl.shift_up(-p.dy);
             p.y = 200;
+            playerDistTraveled -= (int)p.dy; // update score
         }
 
         // Bottom edge detection
         if (p.y > vh-p.height)
         {
-            // TODO this is where the player looses
-            p.y = vh-p.height;
-            p.dy = 0;
+            // TODO move all platforms up until there are no more.
+            break; // break out of main game loop
         }
 
-        p.dx *= 0.85; // friction/wind-resistance... something like that
+        p.dx *= Game::Friction; // friction/wind-resistance... something like that
         p.x  += p.dx;
         p.y  += p.dy;
+
+        // Update score
+        if (playerDistTraveled <= (p.y - vh+p.height) * -1)
+        {
+            playerDistTraveled = (p.y-vh+p.height) * -1;
+        }
+        game.set_score(playerDistTraveled);
 
     #ifdef DEBUG
         // For debugging only: place player with mouse
@@ -119,28 +137,32 @@ int main(void)
         else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
             p.dy = -40; // jump really high
         if (scrolledUp) platform_ctrl.shift_up(20);
-    #endif
-
-        p.width_wrap(vw);
-        p.update();
-
         char buf[500];
         snprintf(buf, sizeof(buf),
             "velocity: <%f, %f>\nposition: <%f, %f>\n",
             p.dx, p.dy, p.x, p.y);
         debugtext.setString(buf);
+    #endif
+
+        p.width_wrap(vw);
+        p.update();
 
         win.draw(background);
         for (int i = 0; i < nplatforms; i++)
             win.draw(platforms[i]);
         win.draw(p.sprite);
         win.draw(debugtext);
+        game.draw(game.score);
         win.display();
     }
+
+    win.clear();
+    win.draw(background);
+    game.end_screen();
     return 0;
 }
 
-static bool handle_close_events(sf::RenderWindow& win)
+static bool should_close(sf::RenderWindow& win)
 {
     sf::Event event;
     scrolledUp = false;

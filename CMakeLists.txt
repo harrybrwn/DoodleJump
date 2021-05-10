@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 11)     # Use c++11
 
 project(DoodleJump)
-file(GLOB SOURCES CONFIGURE_DEPENDS *.cpp *.h)
+file(GLOB SOURCES CONFIGURE_DEPENDS *.cpp *.hpp *.h)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Force static linking with sfml
