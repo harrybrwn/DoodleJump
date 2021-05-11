@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include "Game.hpp"
 #include "util.hpp"
 
@@ -120,18 +121,16 @@ Game::Action Game::end_screen()
     win.draw(endscreen);
     win.draw(again);
 
-    Game::Action action = handle_game_screen_buttons(win, again);
-    if (action == Game::ActionNoOp)
-        return Game::Done;
-    return action;
-}
-
-static Game::Action handle_game_screen_buttons(sf::RenderWindow& win, Button& btn)
-{
+    int rot = 0;
+    float theta = 1.0;
+    float scale = 1.0;
+    auto btn = again;
+    // Game::Action action = handle_game_screen_buttons(win, again);
     sf::Event event;
     while (win.isOpen())
     {
         while (win.pollEvent(event))
+        {
             switch (event.type)
             {
             case sf::Event::Closed:
@@ -168,10 +167,113 @@ static Game::Action handle_game_screen_buttons(sf::RenderWindow& win, Button& bt
                     return Game::Again;
                 break;
             }
+        }
+        theta += 0.03;
+        rot = (rot + 1) % 360;
+        scale = std::sin(theta);
+        endscreen.setRotation(rot);
+        endscreen.setScale(scale, scale);
+        win.draw(background);
+        win.draw(endscreen);
+        win.draw(again);
+        win.display();
+    }
+    return Game::Done;
+    // if (action == Game::ActionNoOp)
+    //     return Game::Done;
+    // return action;
+}
+
+static Game::Action handle_game_screen_buttons(sf::RenderWindow& win, Button& btn)
+{
+    sf::Event event;
+    while (win.isOpen())
+    {
+        while (win.pollEvent(event))
+        {
+            switch (event.type)
+            {
+            case sf::Event::Closed:
+                // Handle the "x" button
+                win.close();
+                return Game::Done;
+            case sf::Event::KeyPressed:
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Q:
+                case sf::Keyboard::Key::Escape:
+                    // Close on "Esc"
+                    win.close();
+                    return Game::Done;
+                case sf::Keyboard::Enter:
+                    btn.set_pressed(true);
+                    win.draw(btn);
+                    break;
+                }
+                break;
+            case sf::Event::KeyReleased:
+                if (event.key.code == sf::Keyboard::Enter && btn.is_pressed())
+                    return Game::Again;
+                break;
+            case sf::Event::MouseButtonPressed:
+                if (btn.clicked(event) && !btn.is_pressed())
+                {
+                    btn.set_pressed(true);
+                    win.draw(btn);
+                }
+                break;
+            case sf::Event::MouseButtonReleased:
+                if (btn.clicked(event) && btn.is_pressed())
+                    return Game::Again;
+                break;
+            }
+        }
         win.display();
     }
     return Game::ActionNoOp;
 }
+
+Game::Action Game::pause()
+{
+    sf::Texture tx;
+    sf::Sprite bg;
+    sf::Event event;
+    if (paused)
+        return Game::Start;
+    paused = true;
+
+    tx.loadFromFile("assets/pause.png");
+    bg.setTexture(tx);
+    win.draw(bg);
+
+    while (win.isOpen())
+    {
+        while (win.pollEvent(event))
+        {
+            switch (event.type)
+            {
+            case sf::Event::Closed:
+                win.close();
+                return Game::Done;
+            case sf::Event::KeyPressed:
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Q:
+                    win.close();
+                    return Game::Done;
+                case sf::Keyboard::Key::Escape:
+                case sf::Keyboard::P:
+                    paused = false;
+                    return Game::Start;
+                }
+                break;
+            }
+            win.display();
+        }
+    }
+    return Game::ActionNoOp;
+}
+
 
 void Game::setup_game_over()
 {
@@ -181,6 +283,9 @@ void Game::setup_game_over()
 
     while (win.isOpen())
     {
+        p.update();
+        p.dx *= Game::Friction;
+        p.x += p.dx;
         plts.shift_up(a);
         for (int i = 0; i < nplatforms; i++)
             if (platforms[i].getPosition().y > 0)
@@ -198,6 +303,11 @@ void Game::apply_debug_controlls()
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
         sf::Vector2i pos = sf::Mouse::getPosition(win);
+        if (pos.y < Game::MaxPlayerHeight)
+        {
+            plts.shift_up(Game::MaxPlayerHeight-pos.y);
+            p.distTraveled += Game::MaxPlayerHeight-pos.y;
+        }
         p.x = pos.x;
         p.y = pos.y;
         p.dy = 0;

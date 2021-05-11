@@ -12,6 +12,7 @@ class Game {
     sf::Sprite background;
     Player& p;
     PlatformCtrl& plts;
+    bool paused;
 
 public:
     static constexpr int   MaxPlayerHeight = 200;
@@ -40,6 +41,7 @@ public:
         score.setFillColor(sf::Color::Black);
         score.setCharacterSize(25);
         score.setString("Score: 0");
+        paused = false;
     }
 
     void draw();
@@ -60,6 +62,7 @@ public:
 
     Action show_opening_screen();
     Action end_screen();
+    Action pause();
 
     void set_background(sf::Sprite bg) { background = bg; }
     void setup_game_over();

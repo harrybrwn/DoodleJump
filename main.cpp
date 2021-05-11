@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <stdlib.h>
+#include <random>
 
 #include "Game.hpp"
 #include "PlatformCtrl.h"
@@ -84,6 +85,12 @@ Gameplay:
         {
             p.look_right();
             p.dx = Game::MoveSpeed; // Moves Right
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+        {
+            if (game.pause() != Game::Start)
+                return 0;
+            continue;
         }
 
         // if hitting a platform while falling
