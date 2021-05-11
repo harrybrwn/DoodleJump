@@ -16,7 +16,6 @@ using namespace std;
 
 static bool should_close(sf::RenderWindow& win);
 static void debug_hitbox(sf::FloatRect hitbox, sf::RenderWindow& win);
-void end_screen(sf::RenderWindow& win, sf::Font& font);
 
 static bool scrolledUp = false;
 
@@ -32,26 +31,16 @@ int main(void)
     vw = backgroundtex.getSize().x;
     vh = backgroundtex.getSize().y;
 
-    int playerDistTraveled = 0;
-
-    Player p("assets/PixelThing.png");
-    p.x = vw / 2;
-    p.y = vh - (vh/4);
-
+    // Game Window
+    sf::VideoMode video(vw, vh);
+    sf::RenderWindow win(video, "Not Doodle Jump ;)", sf::Style::Close);
     // platform stuff
     static const int nplatforms = 13;
     sf::RectangleShape platforms[nplatforms];
     PlatformCtrl platform_ctrl(platforms, nplatforms);
-    platform_ctrl.set_bounds(vw, vh);
-    platform_ctrl.randomize();
-    // guarantee that a platform is under the player at spawn
-    platforms[nplatforms-1].setPosition(
-        p.x-(PlatformCtrl::PlatformWidth/2),
-        p.y+(p.height*2));
+    Player p("assets/PixelThing.png");
 
-    // Create the window
-    sf::VideoMode video(vw, vh);
-    sf::RenderWindow win(video, "Not Doodle Jump ;)", sf::Style::Close);
+    // Create the game controller
     Game game(win);
     game.score.setPosition(vw-175, 50);
 
@@ -59,21 +48,31 @@ int main(void)
     debugtext.setFillColor(sf::Color::Black);
 
     win.draw(background);
-    if (game.show_opening_screen() < 0)
+    if (game.show_opening_screen() == Game::Done)
         return 0;
 
+Gameplay:
+    p.reset();
+    p.x = vw / 2;
+    p.y = vh - (vh/4);
+
+    platform_ctrl.set_bounds(vw, vh);
+    platform_ctrl.randomize();
+    // guarantee that a platform is under the player at spawn
+    platforms[nplatforms-1].setPosition(
+        p.x-(PlatformCtrl::PlatformWidth/2),
+        p.y+(p.height*2));
     win.clear();
+
     while (win.isOpen())
     {
         // Handle window events
         if (should_close(win))
-        {
             return 0;
-        }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         {
-            p.sprite.setScale(-1, 1);
+            p.look_left();
             p.dx = -Game::MoveSpeed; // Moves Left
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
@@ -82,29 +81,18 @@ int main(void)
             p.dx = Game::MoveSpeed; // Moves Right
         }
 
-    #ifdef DEBUG
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            p.jump(-Game::Jump);
-        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            p.y += 1; // for debugging
-    #endif
-
         // if hitting a platform while falling
         if (p.dy >= 0 && platform_ctrl.hit_platform(p.jump_hitbox()))
-        {
-            cout << "platform hit: " << p.dx << ", " << p.dy << std::endl;
             p.dy = -Game::Jump;
-        }
         else
-        {
             p.dy += Game::Gravity;
-        }
 
-        if (p.y < 200 && p.dy < 0)
+        // Shift all platforms up
+        if (p.y < Game::MaxPlayerHeight && p.dy < 0)
         {
             platform_ctrl.shift_up(-p.dy);
-            p.y = 200;
-            playerDistTraveled -= (int)p.dy; // update score
+            p.y = Game::MaxPlayerHeight;
+            p.distTraveled -= (int)p.dy; // update score
         }
 
         // Bottom edge detection
@@ -119,11 +107,11 @@ int main(void)
         p.y  += p.dy;
 
         // Update score
-        if (playerDistTraveled <= (p.y - vh+p.height) * -1)
+        if (p.distTraveled <= (p.y - vh+p.height) * -1)
         {
-            playerDistTraveled = (p.y-vh+p.height) * -1;
+            p.distTraveled = (p.y-vh+p.height) * -1;
         }
-        game.set_score(playerDistTraveled);
+        game.set_score(p.distTraveled);
 
     #ifdef DEBUG
         // For debugging only: place player with mouse
@@ -158,7 +146,10 @@ int main(void)
 
     win.clear();
     win.draw(background);
-    game.end_screen();
+    if (game.end_screen() == Game::Again)
+    {
+        goto Gameplay;
+    }
     return 0;
 }
 

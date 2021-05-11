@@ -8,10 +8,18 @@ class Game {
     sf::RenderWindow& win;
 
 public:
-    static constexpr float Gravity   = 0.3f;
-    static constexpr float Jump      = 10.0f;
-    static constexpr float MoveSpeed = 5.0f;
-    static constexpr float Friction  = 0.85f;
+    static constexpr int   MaxPlayerHeight = 200;
+    static constexpr float Gravity         = 0.30f,
+                           Jump            = 10.0f,
+                           MoveSpeed       = 6.00f,
+                           Friction        = 0.85f;
+
+    enum Action {
+        ActionNoOp,
+        Done,
+        Again,
+        Start,
+    };
 
     sf::Font font;
     sf::Text score;
@@ -38,8 +46,8 @@ public:
         win.draw(drawable, sf::RenderStates::Default);
     }
 
-    int show_opening_screen();
-    int end_screen();
+    Action show_opening_screen();
+    Action end_screen();
 
     void set_score(int value)
     {

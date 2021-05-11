@@ -12,6 +12,7 @@ class Player {
 
 public:
     unsigned int height, width;
+    unsigned int distTraveled;
     float x, y;
     float dx, dy;
     sf::Sprite sprite;
@@ -28,6 +29,7 @@ public:
         width = size.x;
         dx = 0;
         dy = 0;
+        distTraveled = 0;
     }
 
     Player(std::string textureFile)
@@ -41,6 +43,13 @@ public:
         width = size.x;
         height = size.y;
         sprite.setOrigin(width / 2, 0); // set origin at center of player feet
+    }
+
+    void reset()
+    {
+        dx = 0;
+        dy = 0;
+        distTraveled = 0;
     }
 
     void update()
