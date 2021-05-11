@@ -35,14 +35,16 @@ int main(void)
     sf::VideoMode video(vw, vh);
     sf::RenderWindow win(video, "Not Doodle Jump ;)", sf::Style::Close);
     // platform stuff
-    static const int nplatforms = 13;
+    static const int nplatforms = 16;
+    // static const int nplatforms = 8;
     sf::RectangleShape platforms[nplatforms];
     PlatformCtrl platform_ctrl(platforms, nplatforms);
     Player p("assets/PixelThing.png");
 
     // Create the game controller
-    Game game(win);
+    Game game(win, p, platform_ctrl);
     game.score.setPosition(vw-175, 50);
+    game.set_background(background);
 
     sf::Text debugtext("", game.font, 18);
     debugtext.setFillColor(sf::Color::Black);
@@ -58,10 +60,13 @@ Gameplay:
 
     platform_ctrl.set_bounds(vw, vh);
     platform_ctrl.randomize();
-    // guarantee that a platform is under the player at spawn
-    platforms[nplatforms-1].setPosition(
+    // Find the platform closest to the player and move it directly under
+    // platform_ctrl.shift_up(-p.height);
+    sf::RectangleShape* closest_plt = platform_ctrl.closest_platform(p.x, p.y);
+    closest_plt->setPosition(
         p.x-(PlatformCtrl::PlatformWidth/2),
-        p.y+(p.height*2));
+        p.y + (p.height*1.25)
+    );
     win.clear();
 
     while (win.isOpen())
@@ -98,7 +103,7 @@ Gameplay:
         // Bottom edge detection
         if (p.y > vh-p.height)
         {
-            // TODO move all platforms up until there are no more.
+            game.setup_game_over(); // shifts all the platforms up
             break; // break out of main game loop
         }
 
@@ -114,16 +119,7 @@ Gameplay:
         game.set_score(p.distTraveled);
 
     #ifdef DEBUG
-        // For debugging only: place player with mouse
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            sf::Vector2i pos = sf::Mouse::getPosition(win);
-            p.x = pos.x;
-            p.y = pos.y;
-            p.dy = 0;
-        }
-        else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-            p.dy = -40; // jump really high
+        game.apply_debug_controlls();
         if (scrolledUp) platform_ctrl.shift_up(20);
         char buf[500];
         snprintf(buf, sizeof(buf),
@@ -135,12 +131,8 @@ Gameplay:
         p.width_wrap(vw);
         p.update();
 
-        win.draw(background);
-        for (int i = 0; i < nplatforms; i++)
-            win.draw(platforms[i]);
-        win.draw(p.sprite);
+        game.draw();
         win.draw(debugtext);
-        game.draw(game.score);
         win.display();
     }
 

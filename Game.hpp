@@ -4,8 +4,14 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <string>
 
+#include "Player.h"
+#include "PlatformCtrl.h"
+
 class Game {
     sf::RenderWindow& win;
+    sf::Sprite background;
+    Player& p;
+    PlatformCtrl& plts;
 
 public:
     static constexpr int   MaxPlayerHeight = 200;
@@ -24,8 +30,8 @@ public:
     sf::Font font;
     sf::Text score;
 
-    Game(sf::RenderWindow& win)
-      : win(win)
+    Game(sf::RenderWindow& win, Player& player, PlatformCtrl& plts)
+      : win(win), p(player), plts(plts)
     {
         win.setFramerateLimit(60);
         font.loadFromFile("./assets/arial.ttf");
@@ -36,6 +42,7 @@ public:
         score.setString("Score: 0");
     }
 
+    void draw();
     void draw(const sf::Drawable& drawable, const sf::RenderStates& states)
     {
         win.draw(drawable, states);
@@ -46,11 +53,16 @@ public:
         win.draw(drawable, sf::RenderStates::Default);
     }
 
+    void set_score(int value)
+    {
+        score.setString("Score: "+std::to_string(value));
+    }
+
     Action show_opening_screen();
     Action end_screen();
 
-    void set_score(int value)
-    {
-        score.setString("Score: " + std::to_string(value));
-    }
+    void set_background(sf::Sprite bg) { background = bg; }
+    void setup_game_over();
+
+    void apply_debug_controlls();
 };

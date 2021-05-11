@@ -1,8 +1,11 @@
 #pragma once
 
 #include <SFML/Graphics/RectangleShape.hpp>
+
 #include <random>
 #include <ctime>
+
+#include "util.hpp"
 
 /**
  * Platfor controller for managing and generating platforms
@@ -20,7 +23,7 @@ class PlatformCtrl {
     } rng;
 
 public:
-    static const int PlatformWidth = 120;
+    static const int PlatformWidth = 100;
     static const int PlatformHeight = 15;
 
     PlatformCtrl(sf::RectangleShape platforms[], int n)
@@ -31,9 +34,14 @@ public:
         {
             platforms[i].setSize(size);
             platforms[i].setPosition(0, 0);
+
             platforms[i].setFillColor(sf::Color::Black);
         }
     }
+
+    int count() { return n; }
+
+    sf::RectangleShape* get_platforms() { return platforms; }
 
     void set_bounds(int w, int h)
     {
@@ -41,7 +49,8 @@ public:
         screen.w = w;
         screen.h = h;
         rng.x = std::uniform_int_distribution<int>(PlatformWidth/2, w-PlatformWidth);
-        rng.y = std::uniform_int_distribution<int>(0, w / n);
+        // rng.x = std::uniform_int_distribution<int>((w/2), (w/2)+1);
+        rng.y = std::uniform_int_distribution<int>(0, (w / n) - PlatformHeight);
     }
 
     void randomize(int w, int h)
@@ -64,8 +73,7 @@ public:
         for (int i = 0; i < n; i++)
         {
             x = rng.x(rng_engine);
-            // y = rng.y(rng_engine);
-            y = 0;
+            y = rng.y(rng_engine);
             platforms[i].setPosition(x, y+(i*section_width));
         }
     }
@@ -118,25 +126,59 @@ public:
         return PlatformWidth;
     }
 
-    void shift_up(int y);
-};
-
-void PlatformCtrl::shift_up(int y)
-{
-    sf::Vector2f pos;
-    for (int i = 0; i < n; i++)
+    void shift_up(int y)
     {
-        pos = platforms[i].getPosition();
-        if (pos.y > screen.h)
+        sf::Vector2f pos;
+        for (int i = 0; i < n; i++)
         {
-            // generate a new position for the platform
-            // make sure its off-screen
-            platforms[i].setPosition(rng.x(rng_engine), rng.y(rng_engine)-50);
-        }
-        else
-        {
-            pos.y += y;
-            platforms[i].setPosition(pos);
+            pos = platforms[i].getPosition();
+            if (pos.y > screen.h)
+            {
+                // generate a new position for the platform
+                // make sure its off-screen
+                int x, y;
+                x = rng.x(rng_engine);
+                y = rng.y(rng_engine) - 45;
+                platforms[i].setPosition(x, y);
+            }
+            else
+            {
+                pos.y += y;
+                platforms[i].setPosition(pos);
+            }
         }
     }
-}
+
+    sf::RectangleShape* closest_platform(const sf::Vector2f& v)
+    {
+        sf::Vector2f pos;
+        int ix = 0;
+        float min;
+        float dist;
+
+        min = vec_distance(v, platforms[0].getPosition());
+        for (int i = 1; i < n; i++)
+        {
+            dist = vec_distance(v, platforms[i].getPosition());
+            if (dist < min)
+            {
+                min = dist;
+                ix = i;
+            }
+        }
+        return &platforms[ix];
+    }
+
+    sf::RectangleShape* closest_platform(float x, float y)
+    {
+        return closest_platform(sf::Vector2f(x, y));
+    }
+
+    void draw_with(sf::RenderTarget& target)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            target.draw(platforms[i]);
+        }
+    }
+};

@@ -65,6 +65,15 @@ public:
     }
 };
 
+void Game::draw()
+{
+    win.draw(background);
+    plts.draw_with(win);
+    win.draw(p.sprite);
+    win.draw(score);
+}
+
+
 Game::Action Game::show_opening_screen()
 {
     sf::Vector2f view = win.getView().getSize();
@@ -162,4 +171,37 @@ static Game::Action handle_game_screen_buttons(sf::RenderWindow& win, Button& bt
         win.display();
     }
     return Game::ActionNoOp;
+}
+
+void Game::setup_game_over()
+{
+    int a = -10;
+    int nplatforms = plts.count();
+    auto platforms = plts.get_platforms();
+
+    while (win.isOpen())
+    {
+        plts.shift_up(a);
+        for (int i = 0; i < nplatforms; i++)
+            if (platforms[i].getPosition().y > 0)
+                goto keepShifting;
+        return;
+    keepShifting:
+        draw();
+        win.display();
+        a -= 1;
+    }
+}
+
+void Game::apply_debug_controlls()
+{
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    {
+        sf::Vector2i pos = sf::Mouse::getPosition(win);
+        p.x = pos.x;
+        p.y = pos.y;
+        p.dy = 0;
+    }
+    else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+        p.dy = -40; // jump really high
 }
